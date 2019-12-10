@@ -1,7 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
-lname=[]
-lprice=[]
+#lname=[]
+#lprice=[]
 
 src_site=requests.get('https://www.trivago.in/mumbai-84780/hotel').text
 soup=BeautifulSoup(src_site,'lxml')
@@ -16,8 +16,8 @@ for hotel_info in hotel_list.find_all('div',class_='trvsc_path_info'):
 	hotel_price=hotel_info.find('strong',class_='trvsc_path_price').text
 	print("NAME:  ",hotel_name)
 	print("PRICE: ",hotel_price)
-	lname.append(hotel_name)
-	lprice.append(hotel_price)
+	#lname.append(hotel_name)
+	#lprice.append(hotel_price)
 	print()
 	print()
 
