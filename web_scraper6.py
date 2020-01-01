@@ -2,8 +2,9 @@ from pydoc import classify_class_attrs
 
 import  requests
 from bs4 import BeautifulSoup
-enlisted=['tripadvisor','oyorooms','goibibo','booking','cleartrip']#yatra,makemytrip,expedia(returning wrong page)
+enlisted=['tripadvisor','oyorooms','goibibo','booking','cleartrip']#yatra,makemytrip,expedia(returning wrong page)-incomplete functions are written at the end.
 multiplier=0
+
 
 def hotel_urls(place_name):
     url_list = []
@@ -12,11 +13,9 @@ def hotel_urls(place_name):
     while len(url_list)<=2:
         g_url = 'https://www.google.com/search?q=hotels+in+' + place_name+'&sxsrf=ACYBGNSBNAVRf3aRpOPzNEpWgVGDAZOLIA:1577611036104&ei=HG8IXtmLBsGa4-EP6Juo-Ag&start='
         g_url=g_url+str(multiplier*10)+'&sa=N&ved=2ahUKEwif077vw9rmAhVxzjgGHckHAVAQ8tMDegQIFxAt&biw=952&bih=936'
-        #print((multiplier)+1,')', g_url)
         try:
             g_page = requests.get(g_url).text
             g_soup = BeautifulSoup(g_page, 'lxml')
-            #print(g_soup.prettify())
         except Exception as e:
             break
         for match in g_soup.find_all('div', class_='kCrYT'):#use 'r' or 'KCrYT'
@@ -25,14 +24,11 @@ def hotel_urls(place_name):
                 match = match.split('=')[2]
                 match=match.split('&')[0]
                 name=match.split('.')[1]
-                #print(match,name)
                 if (name in enlisted) and (name not in already_in):
                     url_list.append(match)
                     already_in.append(name)
-
             except Exception as e:
                 pass
-        #print(url_list)
         multiplier+=1
     if len(url_list)==0:
         print('NO RESULTS AVAILABLE. TRY SEARCHING USING APPROPRIATE KEYWORDS')
@@ -61,9 +57,9 @@ def tripadvisor(page_soup):
             c+=1
 
     except Exception as e:
-        return 1
+        return 0
+    return 1
 
-    return 0
 
 def oyorooms(page_soup):
     c=0
@@ -97,6 +93,7 @@ def oyorooms(page_soup):
     except Exception as e:
         return 0
 
+    
 def goibibo(page_soup):
     c=0
     hotel_name = 0
@@ -121,6 +118,7 @@ def goibibo(page_soup):
     except Exception as e:
         return 0
 
+    
 def booking(page_soup):
     c=0
     hotel_name = 0
@@ -146,6 +144,7 @@ def booking(page_soup):
     except Exception as e:
         return 0
 
+    
 def cleartrip(page_soup):
     c=0
     hotel_name = 0
@@ -174,14 +173,11 @@ def cleartrip(page_soup):
 
 place_name=input('Enter your destination: ').lstrip().rstrip()
 print()
-#place_name='hyderabad'
 l1=place_name.split()
 place_name=l1[0]
 for i in range(1,len(l1)):
     place_name=place_name+'+'+l1[i]
-#print(place_name)
 url_list=hotel_urls(place_name)
-#print(url_list)
 c = 0
 for urls in url_list:
     if c==3:
@@ -208,6 +204,7 @@ for urls in url_list:
 print('DONE')
 
 
+#the following portion is a collection of waste code....functions for sites which i started working on,but couldn't finish
 
 '''
 def makemytrip(page_soup):
