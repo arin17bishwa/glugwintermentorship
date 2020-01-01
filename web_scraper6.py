@@ -12,45 +12,56 @@ def hotel_urls(place_name):
     while len(url_list)<=2:
         g_url = 'https://www.google.com/search?q=hotels+in+' + place_name+'&sxsrf=ACYBGNSBNAVRf3aRpOPzNEpWgVGDAZOLIA:1577611036104&ei=HG8IXtmLBsGa4-EP6Juo-Ag&start='
         g_url=g_url+str(multiplier*10)+'&sa=N&ved=2ahUKEwif077vw9rmAhVxzjgGHckHAVAQ8tMDegQIFxAt&biw=952&bih=936'
-        #print(g_url)
+        #print((multiplier)+1,')', g_url)
         try:
             g_page = requests.get(g_url).text
             g_soup = BeautifulSoup(g_page, 'lxml')
+            #print(g_soup.prettify())
         except Exception as e:
             break
-        for match in g_soup.find_all('div', class_='kCrYT'):
+        for match in g_soup.find_all('div', class_='kCrYT'):#use 'r' or 'KCrYT'
             try:
                 match = str(match.a)
                 match = match.split('=')[2]
                 match=match.split('&')[0]
                 name=match.split('.')[1]
+                #print(match,name)
                 if (name in enlisted) and (name not in already_in):
                     url_list.append(match)
                     already_in.append(name)
 
             except Exception as e:
                 pass
-
+        #print(url_list)
         multiplier+=1
+    if len(url_list)==0:
+        print('NO RESULTS AVAILABLE. TRY SEARCHING USING APPROPRIATE KEYWORDS')
+        return (url_list)
     return (url_list)
 
 def tripadvisor(page_soup):
     c=0
     hotel_name = 0
     page_soup=page_soup.find('div',class_='bodycon_main')
-    for tile in page_soup.find_all('div',class_='ui_column is-8 main_col allowEllipsis'):
-        if c==5:
-            break
-        hotel_name=tile.find('div',class_='listing_title')
-        hotel_link=str(hotel_name)
-        hotel_link=hotel_link.split('href')[1].split('"')[1]
-        hotel_name=hotel_name.a.text
-        hotel_price=tile.find('div',class_='price autoResize')
-        print('HOTEL NAME:',hotel_name.lstrip().rstrip().split(' \n ')[0])
-        print('PRICE:',hotel_price.text)
-        print('HOTEL LINK:', str('https://www.tripadvisor.in/' + hotel_link))
-        print()
-        c+=1
+    try:
+        for tile in page_soup.find_all('div',class_='ui_column is-8 main_col allowEllipsis'):
+            if c==5:
+                break
+            hotel_name=tile.find('div',class_='listing_title')
+            hotel_link=str(hotel_name)
+            hotel_link=hotel_link.split('href')[1].split('"')[1]
+            hotel_name=hotel_name.a.text
+            hotel_price=tile.find('div',class_='price autoResize').text
+            if hotel_price=='':
+                hotel_price='UNAVAILABLE'
+            print('HOTEL NAME:',hotel_name.lstrip().rstrip().split(' \n ')[0])
+            print('PRICE:',hotel_price)
+            print('HOTEL LINK:', str('https://www.tripadvisor.in/' + hotel_link))
+            print()
+            c+=1
+
+    except Exception as e:
+        return 1
 
     return 0
 
@@ -58,84 +69,108 @@ def oyorooms(page_soup):
     c=0
     hotel_name = 0
     hotel_list = page_soup.find('div', class_='oyo-row oyo-row--no-spacing ListingHotelCardWrapper')
-    for hotel_info in hotel_list.find_all('div', class_='hotelCardListing__descriptionWrapper'):
-        if c==5:
-            break
-        hotel_name = hotel_info.find('div', class_='listingHotelDescription__contentWrapper--left')
-        hotel_link=str(hotel_name.a)
-        hotel_link=hotel_link.split('href')[1].split('"')[1]
-        hotel_link='https://www.oyorooms.com'+hotel_link
-        hotel_name = hotel_name.a.h3.text
-        print("HOTEL NAME: ", hotel_name.lstrip().rstrip())
-        '''hotel_address = hotel_info.find('div', class_='d-body-lg listingHotelDescription__hotelAddress')
-        hotel_address = hotel_address.span.text
-        print("HOTEL ADDRESS:", hotel_address)'''#You can just unquote this part if you ever want to use this functionality
-        price_info = hotel_info.find('div', class_='listingPrice__numbers')
-        try:
-            offer_price = price_info.find('span', class_='listingPrice__finalPrice')
-            print("PRICE:", offer_price.text)
-        except Exception as e:
-            print("PRICE: UNAVAILABLE (SOLD OUT)")
-        print('HOTEL LINK:', hotel_link)
-        print()
-        c+=1
+    try:
+        for hotel_info in hotel_list.find_all('div', class_='hotelCardListing__descriptionWrapper'):
+            if c==5:
+                break
+            hotel_name = hotel_info.find('div', class_='listingHotelDescription__contentWrapper--left')
+            hotel_link=str(hotel_name.a)
+            hotel_link=hotel_link.split('href')[1].split('"')[1]
+            hotel_link='https://www.oyorooms.com'+hotel_link
+            hotel_name = hotel_name.a.h3.text
+            print('HOTEL NAME:',hotel_name.lstrip().rstrip().split(' \n ')[0])
+            '''hotel_address = hotel_info.find('div', class_='d-body-lg listingHotelDescription__hotelAddress')
+            hotel_address = hotel_address.span.text
+            print("HOTEL ADDRESS:", hotel_address)'''#You can just unquote this part if you ever want to use this functionality
+            price_info = hotel_info.find('div', class_='listingPrice__numbers')
+            try:
+                offer_price = price_info.find('span', class_='listingPrice__finalPrice')
+                if offer_price == '':
+                    offer_price = 'UNAVAILABLE'
+                print("PRICE:", offer_price.text)
+            except Exception as e:
+                print("PRICE: UNAVAILABLE")
+            print('HOTEL LINK:', hotel_link)
+            print()
+            c+=1
+        return 1
+    except Exception as e:
+        return 0
 
 def goibibo(page_soup):
     c=0
     hotel_name = 0
-    for tile in page_soup.find_all('div',class_='width100 fl htlListSeo hotel-tile-srp-container hotel-tile-srp-container-template new-htl-design-tile-main-block'):
-        if c==5:
-            break
-        hotel_name=tile.find('div',class_='hotel-tile-srp-container-content-container')
-        hotel_link = str(hotel_name.a)
-        hotel_name=hotel_name.a.text
-        hotel_link=hotel_link.split('href')[1].split('"')[1]
-        hotel_price=tile.find('li',class_='htl-tile-discount-prc')
-        hotel_price=hotel_price.text
-        print('HOTEL NAME:',hotel_name.lstrip().rstrip().split(' \n ')[0])
-        print('PRICE: ',hotel_price)
-        print('HOTEL LINK:', hotel_link)
-        print()
-        c+=1
+    try:
+        for tile in page_soup.find_all('div',class_='width100 fl htlListSeo hotel-tile-srp-container hotel-tile-srp-container-template new-htl-design-tile-main-block'):
+            if c==5:
+                break
+            hotel_name=tile.find('div',class_='hotel-tile-srp-container-content-container')
+            hotel_link = str(hotel_name.a)
+            hotel_name=hotel_name.a.text
+            hotel_link=hotel_link.split('href')[1].split('"')[1]
+            hotel_price=tile.find('li',class_='htl-tile-discount-prc')
+            hotel_price=hotel_price.text
+            print('HOTEL NAME:',hotel_name.lstrip().rstrip().split(' \n ')[0])
+            if hotel_price=='':
+                hotel_price='UNAVAILABLE'
+            print('PRICE: ',hotel_price)
+            print('HOTEL LINK:', hotel_link)
+            print()
+            c+=1
+        return 1
+    except Exception as e:
+        return 0
 
 def booking(page_soup):
     c=0
     hotel_name = 0
-    for tile in page_soup.find_all('div',class_='sr__card'):
-        if c==5:
-            break
-        hotel_name=tile.find('header',class_='bui-spacer--medium').h3.text.lstrip().rstrip()
-        hotel_link=str(tile.find('header',class_='bui-spacer--medium').a)
-        hotel_link = hotel_link.split('href')[1].split('"')[1]
-        try:
-            hotel_price=tile.find('div',class_='sr__card_price bui-spacer--large').span.text
-        except Exception as e:
-            hotel_price='UNAVAILABLE'
-        print('HOTEL NAME:',hotel_name.lstrip().rstrip().split('\n')[0])
-        print('PRICE:',hotel_price)
-        print('HOTEL LINK', str('https://www.booking.com' + hotel_link))
-        print()
-        c+=1
+    try:
+        for tile in page_soup.find_all('div',class_='sr__card'):
+            if c==5:
+                break
+            hotel_name=tile.find('header',class_='bui-spacer--medium').h3.text.lstrip().rstrip()
+            hotel_link=str(tile.find('header',class_='bui-spacer--medium').a)
+            hotel_link = hotel_link.split('href')[1].split('"')[1]
+            try:
+                hotel_price=tile.find('div',class_='sr__card_price bui-spacer--large').span.text
+                if hotel_price == '':
+                    hotel_price = 'UNAVAILABLE'
+            except Exception as e:
+                hotel_price='UNAVAILABLE'
+            print('HOTEL NAME:',hotel_name.lstrip().rstrip().split('\n')[0])
+            print('PRICE:',hotel_price)
+            print('HOTEL LINK', str('https://www.booking.com' + hotel_link))
+            print()
+            c+=1
+        return 1
+    except Exception as e:
+        return 0
 
 def cleartrip(page_soup):
     c=0
     hotel_name = 0
     page_soup=page_soup.find('div',class_='col-sm-9 pad-lzero m-5')
-    for tile in page_soup.find_all('div',class_='hotels-card-cnt'):
-        if c==5:
-            break
-        hotel_name=tile.a
-        hotel_link = 'https://www.cleartrip.com'+str(hotel_name).split('href')[1].split('"')[1].split('&')[0]
-        try:
-            hotel_price=tile.find('div',class_='text-right book-now').a.text
-        except Exception as e:
-            hotel_price='UNAVAILABLE'
-        hotel_name=hotel_name.text
-        print('HOTEL NAME: ',hotel_name.lstrip().rstrip())
-        print('PRICE:',hotel_price.split('/')[0])
-        print('HOTEL LINK: ',hotel_link)
-        print()
-        c+=1
+    try:
+        for tile in page_soup.find_all('div',class_='hotels-card-cnt'):
+            if c==5:
+                break
+            hotel_name=tile.a
+            hotel_link = 'https://www.cleartrip.com'+str(hotel_name).split('href')[1].split('"')[1].split('&')[0]
+            try:
+                hotel_price=tile.find('div',class_='text-right book-now').a.text
+                if hotel_price == '':
+                    hotel_price = 'UNAVAILABLE'
+            except Exception as e:
+                hotel_price='UNAVAILABLE'
+            hotel_name=hotel_name.text
+            print('HOTEL NAME: ',hotel_name.lstrip().rstrip())
+            print('PRICE:',hotel_price.split('/')[0])
+            print('HOTEL LINK: ',hotel_link)
+            print()
+            c+=1
+        return 1
+    except Exception as e :
+        return 0
 
 place_name=input('Enter your destination: ').lstrip().rstrip()
 print()
@@ -167,7 +202,6 @@ for urls in url_list:
         goibibo(page_soup)
     elif site_name=='booking':
         booking(page_soup)
-
     elif site_name=='cleartrip':
         cleartrip(page_soup)
     c+=1
